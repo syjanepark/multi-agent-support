@@ -12,8 +12,8 @@ PRICING = {
 def track_tokens(agent_name, input_tokens, output_tokens, model):
     prices = PRICING.get(model, PRICING["gpt-5-nano"])
     cost = (
-        (input_tokens / 1_000_000) * prices["input"]
-        + (output_tokens / 1_000_000) * prices["output"]
+        (input_tokens / 1_000) * prices["input"]
+        + (output_tokens / 1_000) * prices["output"]
     )
     logger.info(
         "token_usage",
