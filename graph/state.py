@@ -3,6 +3,16 @@ from typing_extensions import TypedDict
 from pydantic import BaseModel, Field
 
 
+def _accumulate_token_usage(a: dict, b: dict) -> dict:
+    """Merge two token_usage dicts, summing numeric fields across agents."""
+    return {
+        **b,
+        "input_tokens": a.get("input_tokens", 0) + b.get("input_tokens", 0),
+        "output_tokens": a.get("output_tokens", 0) + b.get("output_tokens", 0),
+        "cost": a.get("cost", 0.0) + b.get("cost", 0.0),
+    }
+
+
 class CustomerContext(BaseModel):
     """Extracted context about the customer query."""
     customer_id: Optional[str] = None
@@ -43,7 +53,7 @@ class GraphState(TypedDict):
     retrieved_documents: list[dict]
     turn_count: int
     start_time: float
-    token_usage: dict
+    token_usage: Annotated[dict, _accumulate_token_usage]
     error: Optional[str]
     final_response: Optional[str]
     conversation_complete: bool
