@@ -1,42 +1,420 @@
 [
-    {
-      "id": "billing_001",
-      "query": "I was charged twice for my subscription this month",
-      "expected_agent": "billing",
-      "expected_intent": "duplicate_charge",
-      "expected_urgency": "high",
-      "required_topics": ["refund", "investigation", "timeline"]
-    },
-    {
-      "id": "billing_002",
-      "query": "What's the difference between the Starter and Professional plans?",
-      "expected_agent": "billing",
-      "expected_intent": "plan_comparison",
-      "expected_urgency": "low",
-      "required_topics": ["pricing", "features", "api_calls"]
-    },
-    {
-      "id": "technical_001",
-      "query": "I keep getting 429 errors from the API",
-      "expected_agent": "technical",
-      "expected_intent": "rate_limit_error",
-      "expected_urgency": "high",
-      "required_topics": ["rate_limit", "retry", "backoff"]
-    },
-    {
-      "id": "account_001",
-      "query": "How do I set up two-factor authentication?",
-      "expected_agent": "account",
-      "expected_intent": "2fa_setup",
-      "expected_urgency": "medium",
-      "required_topics": ["authenticator", "backup_codes"]
-    },
-    {
-      "id": "general_001",
-      "query": "What programming languages do your SDKs support?",
-      "expected_agent": "general",
-      "expected_intent": "sdk_languages",
-      "expected_urgency": "low",
-      "required_topics": ["python", "javascript", "sdk"]
-    }
-  ]
+  {
+    "id": "billing_001",
+    "query": "I was charged twice for my subscription this month",
+    "expected_agent": "billing",
+    "expected_intent": "duplicate_charge",
+    "expected_urgency": "high",
+    "required_topics": ["refund", "investigation", "timeline"]
+  },
+  {
+    "id": "billing_002",
+    "query": "What's the difference between the Starter and Professional plans?",
+    "expected_agent": "billing",
+    "expected_intent": "plan_comparison",
+    "expected_urgency": "low",
+    "required_topics": ["pricing", "features", "api_calls"]
+  },
+  {
+    "id": "billing_003",
+    "query": "I need a copy of my invoice for last month for my expense report",
+    "expected_agent": "billing",
+    "expected_intent": "invoice_request",
+    "expected_urgency": "low",
+    "required_topics": ["invoice", "receipt", "download"]
+  },
+  {
+    "id": "billing_004",
+    "query": "How do I upgrade from the Starter plan to Professional?",
+    "expected_agent": "billing",
+    "expected_intent": "plan_upgrade",
+    "expected_urgency": "medium",
+    "required_topics": ["upgrade", "billing_cycle", "features"]
+  },
+  {
+    "id": "billing_005",
+    "query": "I want to cancel my subscription at the end of this billing period",
+    "expected_agent": "billing",
+    "expected_intent": "subscription_cancellation",
+    "expected_urgency": "medium",
+    "required_topics": ["cancellation", "end_date", "data_retention"]
+  },
+  {
+    "id": "billing_006",
+    "query": "Is there a discount if I pay annually instead of month to month?",
+    "expected_agent": "billing",
+    "expected_intent": "billing_period_pricing",
+    "expected_urgency": "low",
+    "required_topics": ["annual", "discount", "savings"]
+  },
+  {
+    "id": "billing_007",
+    "query": "My credit card expired and I need to update my payment information before the next charge",
+    "expected_agent": "billing",
+    "expected_intent": "payment_method_update",
+    "expected_urgency": "high",
+    "required_topics": ["payment", "credit_card", "billing"]
+  },
+  {
+    "id": "billing_008",
+    "query": "I have a promo code from a conference — where do I apply it to my account?",
+    "expected_agent": "billing",
+    "expected_intent": "promo_code_redemption",
+    "expected_urgency": "low",
+    "required_topics": ["promo_code", "discount", "billing"]
+  },
+  {
+    "id": "billing_009",
+    "query": "This is absolutely unacceptable. I've been charged THREE times this month and no one is helping me!",
+    "expected_agent": "billing",
+    "expected_intent": "duplicate_charge",
+    "expected_urgency": "high",
+    "required_topics": ["refund", "investigation", "escalation"],
+    "edge_case": "frustrated"
+  },
+  {
+    "id": "billing_010",
+    "query": "We have a team of 50 engineers. Can we get volume pricing or negotiate an enterprise contract?",
+    "expected_agent": "billing",
+    "expected_intent": "enterprise_pricing",
+    "expected_urgency": "low",
+    "required_topics": ["enterprise", "volume_discount", "contract"]
+  },
+  {
+    "id": "billing_011",
+    "query": "I want to cancel my account and get a refund for this month's charge",
+    "expected_agent": "billing",
+    "expected_intent": "cancellation_refund",
+    "expected_urgency": "high",
+    "required_topics": ["cancellation", "refund", "billing_period"],
+    "edge_case": "ambiguous",
+    "edge_case_note": "cancellation could route to account, but refund is the primary financial action"
+  },
+  {
+    "id": "billing_012",
+    "query": "How do I add my company's VAT number so our invoices don't include tax?",
+    "expected_agent": "billing",
+    "expected_intent": "tax_exemption",
+    "expected_urgency": "low",
+    "required_topics": ["vat", "tax", "invoice"]
+  },
+  {
+    "id": "billing_013",
+    "query": "When does my billing cycle reset and when will I be charged next?",
+    "expected_agent": "billing",
+    "expected_intent": "billing_cycle_inquiry",
+    "expected_urgency": "low",
+    "required_topics": ["billing_date", "cycle", "next_charge"]
+  },
+  {
+    "id": "technical_001",
+    "query": "I keep getting 429 errors from the API",
+    "expected_agent": "technical",
+    "expected_intent": "rate_limit_error",
+    "expected_urgency": "high",
+    "required_topics": ["rate_limit", "retry", "backoff"]
+  },
+  {
+    "id": "technical_002",
+    "query": "I'm getting a 401 Unauthorized error on every single API request",
+    "expected_agent": "technical",
+    "expected_intent": "authentication_error",
+    "expected_urgency": "high",
+    "required_topics": ["api_key", "authentication", "401"]
+  },
+  {
+    "id": "technical_003",
+    "query": "My API requests are timing out after about 30 seconds on long generations — is there a way to extend this?",
+    "expected_agent": "technical",
+    "expected_intent": "request_timeout",
+    "expected_urgency": "medium",
+    "required_topics": ["timeout", "long_requests", "streaming"]
+  },
+  {
+    "id": "technical_004",
+    "query": "My webhook endpoint stopped receiving events — it just suddenly stopped working yesterday",
+    "expected_agent": "technical",
+    "expected_intent": "webhook_failure",
+    "expected_urgency": "high",
+    "required_topics": ["webhook", "events", "debugging"]
+  },
+  {
+    "id": "technical_005",
+    "query": "I'm getting an ImportError when I try to import anthropic in Python after installing it",
+    "expected_agent": "technical",
+    "expected_intent": "sdk_installation_error",
+    "expected_urgency": "medium",
+    "required_topics": ["sdk", "python", "installation", "import"]
+  },
+  {
+    "id": "technical_006",
+    "query": "Streaming responses aren't working — I receive the full response at the end rather than incrementally",
+    "expected_agent": "technical",
+    "expected_intent": "streaming_issue",
+    "expected_urgency": "medium",
+    "required_topics": ["streaming", "sse", "configuration"]
+  },
+  {
+    "id": "technical_007",
+    "query": "I'm getting a 'context length exceeded' error even though my prompt doesn't seem that long",
+    "expected_agent": "technical",
+    "expected_intent": "context_window_error",
+    "expected_urgency": "medium",
+    "required_topics": ["tokens", "context_window", "prompt_length"]
+  },
+  {
+    "id": "technical_008",
+    "query": "I've set up tool_use in my request but the model never actually calls the tools — it just responds in plain text",
+    "expected_agent": "technical",
+    "expected_intent": "tool_use_issue",
+    "expected_urgency": "medium",
+    "required_topics": ["tool_use", "function_calling", "configuration"]
+  },
+  {
+    "id": "technical_009",
+    "query": "I keep getting errors but I can't tell if it's a bug in my code or if I've hit some kind of API limit",
+    "expected_agent": "technical",
+    "expected_intent": "debugging_assistance",
+    "expected_urgency": "medium",
+    "required_topics": ["debugging", "error_diagnosis", "rate_limit"],
+    "edge_case": "ambiguous",
+    "edge_case_note": "user is unsure whether the root cause is technical or billing/quota related"
+  },
+  {
+    "id": "technical_010",
+    "query": "How do I generate embeddings using the Claude API for a semantic search use case?",
+    "expected_agent": "technical",
+    "expected_intent": "embeddings_usage",
+    "expected_urgency": "low",
+    "required_topics": ["embeddings", "vectors", "api_usage"]
+  },
+  {
+    "id": "technical_011",
+    "query": "Your API has been returning 500 errors for the past 2 hours and my production app is completely down!",
+    "expected_agent": "technical",
+    "expected_intent": "api_outage",
+    "expected_urgency": "high",
+    "required_topics": ["500_error", "outage", "production", "escalation"],
+    "edge_case": "frustrated"
+  },
+  {
+    "id": "technical_012",
+    "query": "Can you help me fix my 401 authentication error, and also which model should I use for text summarization?",
+    "expected_agent": "technical",
+    "expected_intent": "authentication_error",
+    "expected_urgency": "medium",
+    "required_topics": ["api_key", "401", "model_selection"],
+    "edge_case": "multi_intent",
+    "edge_case_note": "primary intent is debugging the 401 error; model selection is secondary informational request"
+  },
+  {
+    "id": "technical_013",
+    "query": "What's the best approach to process thousands of documents through the API without hitting rate limits?",
+    "expected_agent": "technical",
+    "expected_intent": "batch_processing",
+    "expected_urgency": "low",
+    "required_topics": ["batch", "rate_limit", "async", "queue"]
+  },
+  {
+    "id": "account_001",
+    "query": "How do I set up two-factor authentication?",
+    "expected_agent": "account",
+    "expected_intent": "2fa_setup",
+    "expected_urgency": "medium",
+    "required_topics": ["authenticator", "backup_codes"]
+  },
+  {
+    "id": "account_002",
+    "query": "I forgot my password and the reset email never arrives in my inbox",
+    "expected_agent": "account",
+    "expected_intent": "password_reset",
+    "expected_urgency": "high",
+    "required_topics": ["password", "reset_email", "login"]
+  },
+  {
+    "id": "account_003",
+    "query": "I need to change the email address on my account to my new work email",
+    "expected_agent": "account",
+    "expected_intent": "email_change",
+    "expected_urgency": "medium",
+    "required_topics": ["email", "account_settings", "verification"]
+  },
+  {
+    "id": "account_004",
+    "query": "How do I add a colleague to my team workspace?",
+    "expected_agent": "account",
+    "expected_intent": "team_invite",
+    "expected_urgency": "low",
+    "required_topics": ["team", "invite", "workspace", "permissions"]
+  },
+  {
+    "id": "account_005",
+    "query": "I think my API key was accidentally exposed in a public GitHub repo — how do I rotate it immediately?",
+    "expected_agent": "account",
+    "expected_intent": "api_key_rotation",
+    "expected_urgency": "high",
+    "required_topics": ["api_key", "security", "rotation", "revoke"]
+  },
+  {
+    "id": "account_006",
+    "query": "Where can I see how many API calls I've made this month and how close I am to my limit?",
+    "expected_agent": "account",
+    "expected_intent": "usage_tracking",
+    "expected_urgency": "low",
+    "required_topics": ["usage", "dashboard", "api_calls", "quota"]
+  },
+  {
+    "id": "account_007",
+    "query": "I want to permanently delete my account and all of my data",
+    "expected_agent": "account",
+    "expected_intent": "account_deletion",
+    "expected_urgency": "medium",
+    "required_topics": ["deletion", "data", "gdpr", "closure"]
+  },
+  {
+    "id": "account_008",
+    "query": "something is wrong with my account",
+    "expected_agent": "account",
+    "expected_intent": "account_issue_vague",
+    "expected_urgency": "medium",
+    "required_topics": ["account", "troubleshooting"],
+    "edge_case": "vague"
+  },
+  {
+    "id": "account_009",
+    "query": "How do I configure SAML SSO so my team can log in with our company identity provider?",
+    "expected_agent": "account",
+    "expected_intent": "sso_configuration",
+    "expected_urgency": "medium",
+    "required_topics": ["sso", "saml", "organization", "authentication"]
+  },
+  {
+    "id": "account_010",
+    "query": "I have been trying to reset my password for THREE DAYS. Your system keeps saying the email was sent but I never receive it!",
+    "expected_agent": "account",
+    "expected_intent": "password_reset",
+    "expected_urgency": "high",
+    "required_topics": ["password", "reset_email", "escalation"],
+    "edge_case": "frustrated"
+  },
+  {
+    "id": "account_011",
+    "query": "Can I give a team member read-only access so they can view usage but not manage billing or API keys?",
+    "expected_agent": "account",
+    "expected_intent": "permission_management",
+    "expected_urgency": "low",
+    "required_topics": ["roles", "permissions", "team", "access_control"]
+  },
+  {
+    "id": "account_012",
+    "query": "I need to add a new team member to our workspace and also update the email address where we receive invoices",
+    "expected_agent": "account",
+    "expected_intent": "team_invite",
+    "expected_urgency": "low",
+    "required_topics": ["team", "invite", "billing_email"],
+    "edge_case": "multi_intent",
+    "edge_case_note": "primary intent is account team management; billing email update is secondary and can be surfaced as a follow-up"
+  },
+  {
+    "id": "general_001",
+    "query": "What programming languages do your SDKs support?",
+    "expected_agent": "general",
+    "expected_intent": "sdk_languages",
+    "expected_urgency": "low",
+    "required_topics": ["python", "javascript", "sdk"]
+  },
+  {
+    "id": "general_002",
+    "query": "What's the difference between Claude Opus, Sonnet, and Haiku? Which one should I use?",
+    "expected_agent": "general",
+    "expected_intent": "model_comparison",
+    "expected_urgency": "low",
+    "required_topics": ["models", "capabilities", "tradeoffs", "use_cases"]
+  },
+  {
+    "id": "general_003",
+    "query": "Is the data I send through your API stored or used to train your models?",
+    "expected_agent": "general",
+    "expected_intent": "data_privacy",
+    "expected_urgency": "low",
+    "required_topics": ["privacy", "data_retention", "gdpr", "training"]
+  },
+  {
+    "id": "general_004",
+    "query": "help",
+    "expected_agent": "general",
+    "expected_intent": "general_help",
+    "expected_urgency": "low",
+    "required_topics": ["onboarding", "documentation", "support"],
+    "edge_case": "vague"
+  },
+  {
+    "id": "general_005",
+    "query": "I just signed up — what's the fastest way to make my first API call?",
+    "expected_agent": "general",
+    "expected_intent": "getting_started",
+    "expected_urgency": "low",
+    "required_topics": ["quickstart", "api_key", "first_request", "documentation"]
+  },
+  {
+    "id": "general_006",
+    "query": "Is the API experiencing any issues right now? I'm seeing slowdowns on my end",
+    "expected_agent": "general",
+    "expected_intent": "service_status",
+    "expected_urgency": "medium",
+    "required_topics": ["status", "uptime", "incidents"]
+  },
+  {
+    "id": "general_007",
+    "query": "Do you have SOC 2 Type II or HIPAA compliance certifications? We're evaluating vendors",
+    "expected_agent": "general",
+    "expected_intent": "compliance_inquiry",
+    "expected_urgency": "low",
+    "required_topics": ["soc2", "hipaa", "compliance", "certifications"]
+  },
+  {
+    "id": "general_008",
+    "query": "I have a problem",
+    "expected_agent": "general",
+    "expected_intent": "general_help",
+    "expected_urgency": "low",
+    "required_topics": ["support", "troubleshooting"],
+    "edge_case": "vague"
+  },
+  {
+    "id": "general_009",
+    "query": "What are the API rate limits and how are they calculated — is it per minute, per day, or per token?",
+    "expected_agent": "general",
+    "expected_intent": "rate_limits_info",
+    "expected_urgency": "low",
+    "required_topics": ["rate_limits", "tokens", "requests_per_minute", "tiers"]
+  },
+  {
+    "id": "general_010",
+    "query": "Do you offer any discounts for startups or nonprofit organizations?",
+    "expected_agent": "general",
+    "expected_intent": "discount_inquiry",
+    "expected_urgency": "low",
+    "required_topics": ["startup", "nonprofit", "discount", "pricing"],
+    "edge_case": "ambiguous",
+    "edge_case_note": "could route to billing for plan details, but this is a pre-sales informational question best handled by general"
+  },
+  {
+    "id": "general_011",
+    "query": "Is there a community forum or Discord where I can get help from other developers using the API?",
+    "expected_agent": "general",
+    "expected_intent": "community_resources",
+    "expected_urgency": "low",
+    "required_topics": ["community", "forum", "discord", "resources"]
+  },
+  {
+    "id": "general_012",
+    "query": "What models do you offer and what are their context window sizes? Also, how do I authenticate my first API request?",
+    "expected_agent": "general",
+    "expected_intent": "model_information",
+    "expected_urgency": "low",
+    "required_topics": ["models", "context_window", "api_key", "authentication"],
+    "edge_case": "multi_intent",
+    "edge_case_note": "both intents are informational and general handles both; no escalation needed"
+  }
+]
