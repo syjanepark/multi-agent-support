@@ -1,0 +1,42 @@
+[
+    {
+      "id": "billing_001",
+      "query": "I was charged twice for my subscription this month",
+      "expected_agent": "billing",
+      "expected_intent": "duplicate_charge",
+      "expected_urgency": "high",
+      "required_topics": ["refund", "investigation", "timeline"]
+    },
+    {
+      "id": "billing_002",
+      "query": "What's the difference between the Starter and Professional plans?",
+      "expected_agent": "billing",
+      "expected_intent": "plan_comparison",
+      "expected_urgency": "low",
+      "required_topics": ["pricing", "features", "api_calls"]
+    },
+    {
+      "id": "technical_001",
+      "query": "I keep getting 429 errors from the API",
+      "expected_agent": "technical",
+      "expected_intent": "rate_limit_error",
+      "expected_urgency": "high",
+      "required_topics": ["rate_limit", "retry", "backoff"]
+    },
+    {
+      "id": "account_001",
+      "query": "How do I set up two-factor authentication?",
+      "expected_agent": "account",
+      "expected_intent": "2fa_setup",
+      "expected_urgency": "medium",
+      "required_topics": ["authenticator", "backup_codes"]
+    },
+    {
+      "id": "general_001",
+      "query": "What programming languages do your SDKs support?",
+      "expected_agent": "general",
+      "expected_intent": "sdk_languages",
+      "expected_urgency": "low",
+      "required_topics": ["python", "javascript", "sdk"]
+    }
+  ]
