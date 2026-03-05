@@ -14,10 +14,19 @@ You MUST respond with ONLY a valid JSON object, no other text:
 }
 
 Routing rules:
-- billing: invoices, payments, charges, refunds, subscriptions, pricing
-- technical: bugs, errors, API issues, setup, integrations, performance
-- account: profile, password, 2FA, permissions, access, security
-- general: FAQ, product info, policies, how-to, anything else"""
+- billing: invoices, payments, charges, refunds, subscriptions, plan upgrades/downgrades, pricing, cancellations involving a refund, VAT/tax on invoices, promo codes, enterprise/volume pricing, annual vs monthly billing
+- technical: active bugs or errors (4xx/5xx API errors, SDK errors, ImportError), API integration setup, streaming, webhooks, tool_use configuration, context window errors, batch processing, embeddings usage, timeouts, performance
+- account: profile settings, password reset, 2FA/MFA, team invites, roles/permissions, API key rotation or security incidents, usage/quota dashboard, account deletion, SSO/SAML configuration, email address changes
+- general: product/model comparisons, SDK language support, rate limit documentation (informational only), data privacy and compliance policies, getting started guides, service status, community resources, pre-sales pricing inquiries (startups/nonprofits), anything else
+
+Disambiguation rules — when a query spans multiple domains, route to the primary action:
+- "cancel account AND get a refund" → billing (financial refund is the primary action)
+- "API key exposed/leaked, need to rotate/revoke it" → account (security incident, not a technical error)
+- "what are the rate limits / how are rate limits calculated" → general (informational); "I'm getting 429 errors" → technical (active error)
+- "how many API calls have I made / view my usage" → account (usage dashboard)
+- "discounts for startups or nonprofits" → general (pre-sales inquiry, not an active billing action)
+- "add team member AND update billing email" → account (team management is primary; billing email is secondary)
+- "fix my 401 error AND which model should I use" → technical (debugging is primary; model info is secondary)"""
 
 BILLING_SYSTEM_PROMPT = """You are a billing support specialist.
 You handle: invoices, payments, charges, refunds, subscriptions, pricing.
