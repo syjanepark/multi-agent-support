@@ -5,7 +5,7 @@ from config.prompts import TECHNICAL_SYSTEM_PROMPT
 
 class TechnicalAgent(BaseAgent):
     def __init__(self):
-        super().__init__(TECHNICAL_SYSTEM_PROMPT, domain="technical")
+        super().__init__(TECHNICAL_SYSTEM_PROMPT, domain="technical", max_completion_tokens=2500)
 
     def _validate(self, response: AgentResponse, state: GraphState) -> AgentResponse:
         """

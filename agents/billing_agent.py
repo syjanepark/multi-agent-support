@@ -5,7 +5,7 @@ from config.prompts import BILLING_SYSTEM_PROMPT
 
 class BillingAgent(BaseAgent):
     def __init__(self):
-        super().__init__(BILLING_SYSTEM_PROMPT, domain="billing")
+        super().__init__(BILLING_SYSTEM_PROMPT, domain="billing", rag_top_k=5)
 
     def _validate(self, response: AgentResponse, state: GraphState) -> AgentResponse:
         """
