@@ -54,7 +54,8 @@
     "expected_intent": "payment_method_update",
     "expected_urgency": "high",
     "required_topics": ["payment", "credit_card", "billing"]
-  },
+  }
+  ,
   {
     "id": "billing_008",
     "query": "I have a promo code from a conference — where do I apply it to my account?",

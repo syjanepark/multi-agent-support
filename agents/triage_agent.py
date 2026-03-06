@@ -1,6 +1,6 @@
 import json
 import structlog
-from openai import AzureOpenAI
+from openai import AsyncAzureOpenAI
 from graph.state import GraphState, CustomerContext, RoutingDecision
 from config.settings import get_settings
 from config.prompts import TRIAGE_SYSTEM_PROMPT
@@ -14,7 +14,7 @@ class TriageAgent:
 
     def __init__(self):
         settings = get_settings()
-        self.client = AzureOpenAI(
+        self.client = AsyncAzureOpenAI(
             api_key=settings.azure_openai_api_key,
             api_version=settings.azure_openai_api_version,
             azure_endpoint=settings.azure_openai_endpoint,
@@ -25,13 +25,12 @@ class TriageAgent:
     async def process(self, state: GraphState) -> dict:
         logger.info("triage_started", query=state["customer_query"][:100])
 
-        response = self.client.chat.completions.create(
+        response = await self.client.chat.completions.create(
             model=self.model,
             messages=[
                 {"role": "system", "content": TRIAGE_SYSTEM_PROMPT},
                 {"role": "user", "content": state["customer_query"]},
             ],
-            temperature=1,
             response_format={"type": "json_object"},
         )
 

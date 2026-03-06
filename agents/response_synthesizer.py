@@ -1,5 +1,5 @@
 import structlog
-from openai import AzureOpenAI
+from openai import AsyncAzureOpenAI
 from graph.state import GraphState
 from config.settings import get_settings
 from config.prompts import SYNTHESIZER_PROMPT
@@ -11,7 +11,7 @@ logger = structlog.get_logger()
 class ResponseSynthesizer:
     def __init__(self):
         settings = get_settings()
-        self.client = AzureOpenAI(
+        self.client = AsyncAzureOpenAI(
             api_key=settings.azure_openai_api_key,
             api_version=settings.azure_openai_api_version,
             azure_endpoint=settings.azure_openai_endpoint,
@@ -50,13 +50,13 @@ class ResponseSynthesizer:
             f"Urgency: {urgency}"
         )
 
-        response = self.client.chat.completions.create(
+        response = await self.client.chat.completions.create(
             model=self.model,
             messages=[
                 {"role": "system", "content": SYNTHESIZER_PROMPT},
                 {"role": "user", "content": user_message},
             ],
-            temperature=1,
+            max_completion_tokens=300,
         )
 
         usage = response.usage

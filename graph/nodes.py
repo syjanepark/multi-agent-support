@@ -20,31 +20,51 @@ synthesizer = ResponseSynthesizer()
 
 
 async def triage_node(state: GraphState) -> dict:
-    return await triage.process(state)
+    start = time.time()
+    result = await triage.process(state)
+    print(f"  triage: {time.time() - start:.2f}s")
+    return result
 
 
 async def billing_node(state: GraphState) -> dict:
-    return await billing.process(state)
+    start = time.time()
+    result = await billing.process(state)
+    print(f"  billing: {time.time() - start:.2f}s")
+    return result
 
 
 async def technical_node(state: GraphState) -> dict:
-    return await technical.process(state)
+    start = time.time()
+    result = await technical.process(state)
+    print(f"  technical: {time.time() - start:.2f}s")
+    return result
 
 
 async def account_node(state: GraphState) -> dict:
-    return await account.process(state)
+    start = time.time()
+    result = await account.process(state)
+    print(f"  account: {time.time() - start:.2f}s")
+    return result
 
 
 async def general_node(state: GraphState) -> dict:
-    return await general.process(state)
+    start = time.time()
+    result = await general.process(state)
+    print(f"  general: {time.time() - start:.2f}s")
+    return result
 
 
 async def synthesize_node(state: GraphState) -> dict:
-    result = await synthesizer.process(state)
+    agent_resp = state.get("agent_response")
+    followups = ""
+    if agent_resp and agent_resp.suggested_followups:
+        followups = "\n\nRelated questions:\n" + "\n".join(
+            f"- {q}" for q in agent_resp.suggested_followups
+        )
+    final_response = (agent_resp.content if agent_resp else "Unable to process your request.") + followups
     elapsed = round(time.time() - state["start_time"], 3)
     logger.info("request_complete", elapsed_seconds=elapsed)
-    result["elapsed_seconds"] = elapsed
-    return result
+    return {"final_response": final_response, "conversation_complete": True, "elapsed_seconds": elapsed}
 
 
 async def escalation_node(state: GraphState) -> dict:

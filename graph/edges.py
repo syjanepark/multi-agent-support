@@ -24,6 +24,13 @@ def route_after_agent(state) -> str:
     - Otherwise -> synthesize
     """
     agent_response = state.get("agent_response")
-    if not agent_response or agent_response.requires_human or agent_response.confidence < 0.5:
+    if not agent_response:
+        print("  -> escalation: no agent_response")
+        return "escalation"
+    if agent_response.requires_human:
+        print(f"  -> escalation: requires_human ({agent_response.human_reason})")
+        return "escalation"
+    if agent_response.confidence < 0.5:
+        print(f"  -> escalation: low confidence ({agent_response.confidence})")
         return "escalation"
     return "synthesize"

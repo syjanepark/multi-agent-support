@@ -17,7 +17,7 @@ class RAGTool:
         )
         self.domain = domain
 
-    async def retrieve(self, query: str, top_k: int = 5) -> list[dict]:
+    async def retrieve(self, query: str, top_k: int = 3) -> list[dict]:
         """
         Hybrid search (semantic + keyword) with optional domain filtering.
 
