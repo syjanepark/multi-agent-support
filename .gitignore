@@ -48,3 +48,14 @@ logs/
 # Jupyter
 .ipynb_checkpoints/
 *.ipynb
+
+# Dashboard (Next.js)
+dashboard/.next/
+dashboard/node_modules/
+dashboard/out/
+dashboard/.turbo/
+dashboard/pnpm-lock.yaml
+dashboard/package-lock.json
+
+# Root package lock
+package-lock.json
