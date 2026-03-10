@@ -1,9 +1,10 @@
 import json
 import asyncio
 import time
+import os
 from dataclasses import dataclass, field
-from openai import AzureOpenAI
-from graph.orchestrator import support_graph
+from typing import Optional
+import httpx
 from config.settings import get_settings
 import structlog
 
@@ -25,7 +26,7 @@ class EvaluationResult:
 
 
 class SystemEvaluator:
-    def __init__(self):
+    def __init__(self, api_url: Optional[str] = None):
         settings = get_settings()
         from openai import AsyncAzureOpenAI
         self.judge = AsyncAzureOpenAI(
@@ -34,6 +35,7 @@ class SystemEvaluator:
             azure_endpoint=settings.azure_openai_endpoint,
         )
         self.judge_model = settings.azure_openai_chat_deployment
+        self.api_url = api_url or os.getenv("API_URL", "http://localhost:8000")
 
     async def evaluate_dataset(self, dataset_path: str) -> EvaluationResult:
         with open(dataset_path) as f:
@@ -113,45 +115,17 @@ class SystemEvaluator:
         return result
 
     async def _run_single(self, case: dict) -> dict:
-        start = time.time()
+        async with httpx.AsyncClient(timeout=60.0) as client:
+            resp = await client.post(
+                f"{self.api_url}/support",
+                json={"query": case["query"], "session_id": case["id"]},
+            )
+            resp.raise_for_status()
+            data = resp.json()
 
-        graph_result = await support_graph.ainvoke(
-            {
-                "customer_query": case["query"],
-                "messages": [],
-                "turn_count": 0,
-                "start_time": start,
-                "token_usage": {},
-                "retrieved_documents": [],
-                "conversation_complete": False,
-                "customer_context": None,
-                "routing_decision": None,
-                "current_agent": None,
-                "agent_response": None,
-                "error": None,
-                "final_response": None,
-            },
-            config={"configurable": {"thread_id": case["id"]}},
-        )
-
-        elapsed = time.time() - start
-
-        routing = graph_result.get("routing_decision")
-        agent_response = graph_result.get("agent_response")
-        final_response = graph_result.get("final_response") or ""
-
-        actual_agent = routing.target_agent if routing else None
+        actual_agent = data["agent_used"]
         routing_correct = actual_agent == case["expected_agent"]
-
-        confidence = agent_response.confidence if agent_response else None
-
-        escalated = bool(
-            (routing and routing.requires_escalation)
-            or (agent_response and agent_response.requires_human)
-        )
-
-        token_usage = graph_result.get("token_usage") or {}
-        cost = token_usage.get("cost", 0.0)
+        final_response = data["response"] or ""
 
         relevance_score = await self._judge_relevance(
             case["query"],
@@ -165,19 +139,19 @@ class SystemEvaluator:
             routing_correct=routing_correct,
             actual_agent=actual_agent,
             expected_agent=case["expected_agent"],
-            confidence=confidence,
+            confidence=data["confidence"],
             relevance=relevance_score,
-            elapsed=round(elapsed, 2),
+            elapsed=data["response_time"],
         )
 
         return {
             "routing_correct": routing_correct,
             "actual_agent": actual_agent,
-            "confidence": confidence,
-            "response_time": elapsed,
+            "confidence": data["confidence"],
+            "response_time": data["response_time"],
             "relevance_score": relevance_score,
-            "cost": cost,
-            "escalated": escalated,
+            "cost": data["cost"],
+            "escalated": data["was_escalated"],
         }
 
     async def _judge_relevance(self, query: str, response: str, required_topics: list[str]) -> float:
