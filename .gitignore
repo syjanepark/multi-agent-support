@@ -58,5 +58,14 @@ dashboard/pnpm-lock.yaml
 dashboard/package-lock.json
 dashboard/.env.local
 
+# Chat UI (Next.js)
+chatUI/.next/
+chatUI/node_modules/
+chatUI/out/
+chatUI/.turbo/
+chatUI/pnpm-lock.yaml
+chatUI/package-lock.json
+chatUI/.env.local
+
 # Root package lock
 package-lock.json
