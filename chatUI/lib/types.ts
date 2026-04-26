@@ -21,6 +21,7 @@ export interface Message {
   wasEscalated?: boolean
   responseTime?: number
   cost?: number
+  isStreaming?: boolean
 }
 
 export const AGENT_CONFIG: Record<string, { emoji: string; label: string; colorClass: string }> = {
