@@ -7,7 +7,7 @@ import { ChatInput } from './chat-input'
 import { ChatSidebar } from './chat-sidebar'
 import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet'
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden'
-import type { Message, SupportResponse } from '@/lib/types'
+import type { Message } from '@/lib/types'
 import { cn } from '@/lib/utils'
 
 function generateSessionId(): string {
@@ -18,10 +18,13 @@ function generateSessionId(): string {
   })
 }
 
+const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000'
+
 export function SupportChat() {
   const [sessionId, setSessionId] = useState('')
   const [messages, setMessages] = useState<Message[]>([])
   const [isLoading, setIsLoading] = useState(false)
+  const [isStreaming, setIsStreaming] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false)
 
@@ -31,7 +34,7 @@ export function SupportChat() {
 
   const sendMessage = useCallback(
     async (content: string) => {
-      if (!content.trim() || isLoading) return
+      if (!content.trim() || isLoading || isStreaming) return
 
       const userMessage: Message = {
         id: crypto.randomUUID(),
@@ -43,35 +46,74 @@ export function SupportChat() {
       setMessages((prev) => [...prev, userMessage])
       setIsLoading(true)
 
+      let assistantMsgId: string | null = null
+
       try {
-        const response = await fetch('http://localhost:8000/support', {
+        const response = await fetch(`${API_BASE}/support/stream`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ query: content, session_id: sessionId }),
         })
 
-        if (!response.ok) {
-          throw new Error('Failed to get response')
+        if (!response.ok) throw new Error('Failed to get response')
+
+        const reader = response.body!.getReader()
+        const decoder = new TextDecoder()
+
+        while (true) {
+          const { done, value } = await reader.read()
+          if (done) break
+
+          const lines = decoder.decode(value, { stream: true }).split('\n')
+          for (const line of lines) {
+            if (!line.startsWith('data: ')) continue
+            const data = JSON.parse(line.slice(6))
+
+            if (data.type === 'routing') {
+              assistantMsgId = crypto.randomUUID()
+              setMessages((prev) => [
+                ...prev,
+                {
+                  id: assistantMsgId!,
+                  role: 'assistant',
+                  content: '',
+                  timestamp: new Date(),
+                  agentUsed: data.agent_used,
+                  isStreaming: true,
+                },
+              ])
+              setIsLoading(false)
+              setIsStreaming(true)
+            } else if (data.type === 'token' && assistantMsgId) {
+              setMessages((prev) =>
+                prev.map((m) =>
+                  m.id === assistantMsgId ? { ...m, content: m.content + data.content } : m
+                )
+              )
+            } else if (data.type === 'done' && assistantMsgId) {
+              setMessages((prev) =>
+                prev.map((m) =>
+                  m.id === assistantMsgId
+                    ? {
+                        ...m,
+                        isStreaming: false,
+                        sources: data.sources,
+                        suggestedFollowups: data.suggested_followups,
+                        wasEscalated: data.was_escalated,
+                        responseTime: data.response_time,
+                        cost: data.cost,
+                      }
+                    : m
+                )
+              )
+              setIsStreaming(false)
+            } else if (data.type === 'error') {
+              throw new Error(data.message)
+            }
+          }
         }
-
-        const data: SupportResponse = await response.json()
-
-        const assistantMessage: Message = {
-          id: crypto.randomUUID(),
-          role: 'assistant',
-          content: data.response,
-          timestamp: new Date(),
-          agentUsed: data.agent_used,
-          sources: data.sources,
-          suggestedFollowups: data.suggested_followups,
-          wasEscalated: data.was_escalated,
-          responseTime: data.response_time,
-          cost: data.cost,
-        }
-
-        setMessages((prev) => [...prev, assistantMessage])
       } catch {
-        // Mock response for demo purposes when API is not available
+        // Fallback mock response when API is unavailable
         const mockResponse: Message = {
           id: crypto.randomUUID(),
           role: 'assistant',
@@ -84,12 +126,16 @@ export function SupportChat() {
           responseTime: Math.random() * 500 + 100,
           cost: Math.random() * 0.01,
         }
-        setMessages((prev) => [...prev, mockResponse])
+        setMessages((prev) => {
+          const filtered = assistantMsgId ? prev.filter((m) => m.id !== assistantMsgId) : prev
+          return [...filtered, mockResponse]
+        })
       } finally {
         setIsLoading(false)
+        setIsStreaming(false)
       }
     },
-    [sessionId, isLoading]
+    [sessionId, isLoading, isStreaming]
   )
 
   const handleNewConversation = useCallback(() => {
@@ -114,7 +160,7 @@ export function SupportChat() {
             onFollowupClick={sendMessage}
             onExampleClick={sendMessage}
           />
-          <ChatInput onSend={sendMessage} disabled={isLoading} />
+          <ChatInput onSend={sendMessage} disabled={isLoading || isStreaming} />
         </main>
 
         {/* Desktop Sidebar */}
