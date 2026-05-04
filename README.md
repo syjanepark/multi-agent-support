@@ -59,6 +59,14 @@ dashboard/             # Next.js monitoring dashboard (port 3000)
   lib/
     types.ts           # TypeScript types mirroring API schemas
 
+chatUI/                # Next.js customer-facing chat UI (port 3000)
+  app/                 # Next.js App Router pages
+  components/
+    chat/              # SupportChat, ChatArea, ChatMessage, ChatInput, etc.
+  hooks/               # use-mobile, use-toast
+  lib/
+    types.ts           # Message, SupportResponse, AGENT_CONFIG
+
 monitoring/
   logger.py            # structlog configuration
   metrics_collector.py # In-memory metrics collector (thread-safe)
@@ -130,7 +138,16 @@ npm run dev
 # → http://localhost:3000
 ```
 
-Set `NEXT_PUBLIC_API_URL` in `dashboard/.env.local` if the backend runs on a different host/port (defaults to `http://localhost:8000`).
+### Chat UI
+
+```bash
+cd chatUI
+npm install
+npm run dev
+# → http://localhost:3000
+```
+
+Set `NEXT_PUBLIC_API_URL` in `dashboard/.env.local` or `chatUI/.env.local` if the backend runs on a different host/port (defaults to `http://localhost:8000`).
 
 ### Evaluation
 
@@ -194,6 +211,32 @@ Process a customer support query through the multi-agent graph.
 | `routing_confidence` | Triage confidence in its routing decision (0–1) |
 | `was_escalated` | `true` if routed to human handoff |
 | `cost` | Estimated OpenAI token cost in USD |
+
+---
+
+### `POST /support/stream`
+
+Same as `/support` but returns a **Server-Sent Events** stream. Used by the chat UI for real-time token-by-token rendering.
+
+**Event types**
+
+| Event | When | Payload |
+|---|---|---|
+| `routing` | After triage completes | `{ type, agent_used }` |
+| `token` | As response generates | `{ type, content }` |
+| `done` | After last token | Full metadata (same fields as `/support` response) |
+| `error` | On failure | `{ type, message }` |
+
+**Example stream**
+```
+data: {"type": "routing", "agent_used": "billing"}
+
+data: {"type": "token", "content": "We"}
+data: {"type": "token", "content": " found"}
+...
+
+data: {"type": "done", "agent_used": "billing", "confidence": 0.92, "was_escalated": false, ...}
+```
 
 ---
 
