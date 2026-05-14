@@ -19,6 +19,7 @@ function generateSessionId(): string {
 }
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000'
+const API_KEY = process.env.NEXT_PUBLIC_API_KEY ?? ''
 
 export function SupportChat() {
   const [sessionId, setSessionId] = useState('')
@@ -51,7 +52,10 @@ export function SupportChat() {
       try {
         const response = await fetch(`${API_BASE}/support/stream`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            ...(API_KEY && { 'X-Api-Key': API_KEY }),
+          },
           body: JSON.stringify({ query: content, session_id: sessionId }),
         })
 
