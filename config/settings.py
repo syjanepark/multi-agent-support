@@ -1,5 +1,7 @@
 from pydantic_settings import BaseSettings
+from pydantic import field_validator
 from functools import lru_cache
+from typing import Optional
 
 
 class Settings(BaseSettings):
@@ -18,6 +20,17 @@ class Settings(BaseSettings):
     escalation_confidence_threshold: float = 0.5
     max_turns: int = 5
     max_cost_per_query: float = 0.10
+
+    # Security
+    allowed_origins: list[str] = ["*"]
+    api_key: Optional[str] = None
+
+    @field_validator("allowed_origins", mode="before")
+    @classmethod
+    def parse_origins(cls, v):
+        if isinstance(v, str):
+            return [o.strip() for o in v.split(",")]
+        return v
 
     class Config:
         env_file = ".env"
