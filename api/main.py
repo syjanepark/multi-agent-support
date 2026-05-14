@@ -2,19 +2,25 @@ import asyncio
 import json as _json
 import time
 import uuid
-from fastapi import FastAPI, HTTPException
+from typing import Optional
+from fastapi import FastAPI, HTTPException, Request, Header, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from contextlib import asynccontextmanager
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 import structlog
 
 from api.schemas import SupportRequest, SupportResponse, HealthResponse
+from config.settings import get_settings
 from graph.orchestrator import support_graph
 from monitoring.metrics_collector import MetricsCollector
 
 logger = structlog.get_logger()
 START_TIME = time.time()
 metrics = MetricsCollector()
+limiter = Limiter(key_func=get_remote_address)
 
 
 @asynccontextmanager
@@ -30,27 +36,39 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+_settings = get_settings()
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=_settings.allowed_origins,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 
-@app.post("/support", response_model=SupportResponse)
-async def handle_support(request: SupportRequest):
+async def verify_api_key(x_api_key: Optional[str] = Header(None)):
+    settings = get_settings()
+    if settings.api_key and x_api_key != settings.api_key:
+        raise HTTPException(status_code=401, detail="Invalid or missing API key")
+
+
+@app.post("/support", response_model=SupportResponse,
+          dependencies=[Depends(verify_api_key)])
+@limiter.limit("20/minute")
+async def handle_support(request: Request, body: SupportRequest):
     request_id = str(uuid.uuid4())
     start = time.time()
 
     logger.info("request_received", request_id=request_id,
-                query_length=len(request.query))
+                query_length=len(body.query))
 
     try:
-        config = {"configurable": {"thread_id": request.session_id or request_id}}
+        config = {"configurable": {"thread_id": body.session_id or request_id}}
         result = await support_graph.ainvoke(
             {
-                "customer_query": request.query,
+                "customer_query": body.query,
                 "messages": [],
                 "turn_count": 0,
                 "start_time": start,
@@ -110,18 +128,19 @@ async def handle_support(request: SupportRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.post("/support/stream")
-async def handle_support_stream(request: SupportRequest):
+@app.post("/support/stream", dependencies=[Depends(verify_api_key)])
+@limiter.limit("20/minute")
+async def handle_support_stream(request: Request, body: SupportRequest):
     request_id = str(uuid.uuid4())
     start = time.time()
 
     logger.info("stream_request_received", request_id=request_id,
-                query_length=len(request.query))
+                query_length=len(body.query))
 
     async def event_stream():
-        config = {"configurable": {"thread_id": request.session_id or request_id}}
+        config = {"configurable": {"thread_id": body.session_id or request_id}}
         initial_state = {
-            "customer_query": request.query,
+            "customer_query": body.query,
             "messages": [],
             "turn_count": 0,
             "start_time": start,
