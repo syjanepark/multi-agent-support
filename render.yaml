@@ -1,0 +1,57 @@
+services:
+  - type: web
+    name: support-api
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn api.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: AZURE_OPENAI_API_KEY
+        sync: false
+      - key: AZURE_OPENAI_ENDPOINT
+        sync: false
+      - key: AZURE_OPENAI_API_VERSION
+        value: 2024-12-01-preview
+      - key: AZURE_OPENAI_CHAT_DEPLOYMENT
+        value: gpt-5-mini
+      - key: AZURE_OPENAI_MINI_DEPLOYMENT
+        value: gpt-5-nano
+      - key: AZURE_OPENAI_EMBEDDING_DEPLOYMENT
+        value: text-embedding-3-small
+      - key: AZURE_SEARCH_ENDPOINT
+        sync: false
+      - key: AZURE_SEARCH_KEY
+        sync: false
+      - key: AZURE_SEARCH_INDEX
+        value: customer-support-index
+      - key: API_KEY
+        sync: false
+      # Set to comma-separated list of your deployed frontend URLs after first deploy
+      # e.g. https://support-chat.onrender.com,https://support-dashboard.onrender.com
+      - key: ALLOWED_ORIGINS
+        sync: false
+
+  - type: web
+    name: support-chat
+    runtime: node
+    rootDir: chatUI
+    buildCommand: npm install && npm run build
+    startCommand: npx next start -p $PORT
+    envVars:
+      # Set to your support-api Render URL, e.g. https://support-api.onrender.com
+      - key: NEXT_PUBLIC_API_URL
+        sync: false
+      - key: NEXT_PUBLIC_API_KEY
+        sync: false
+
+  - type: web
+    name: support-dashboard
+    runtime: node
+    rootDir: dashboard
+    buildCommand: npm install && npm run build
+    startCommand: npx next start -p $PORT
+    envVars:
+      # Set to your support-api Render URL, e.g. https://support-api.onrender.com
+      - key: NEXT_PUBLIC_API_URL
+        sync: false
+      - key: NEXT_PUBLIC_API_KEY
+        sync: false
