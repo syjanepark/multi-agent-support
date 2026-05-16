@@ -22,35 +22,35 @@ synthesizer = ResponseSynthesizer()
 async def triage_node(state: GraphState) -> dict:
     start = time.time()
     result = await triage.process(state)
-    print(f"  triage: {time.time() - start:.2f}s")
+    logger.debug("node_complete", node="triage", elapsed=round(time.time() - start, 3))
     return result
 
 
 async def billing_node(state: GraphState) -> dict:
     start = time.time()
     result = await billing.process(state)
-    print(f"  billing: {time.time() - start:.2f}s")
+    logger.debug("node_complete", node="billing", elapsed=round(time.time() - start, 3))
     return result
 
 
 async def technical_node(state: GraphState) -> dict:
     start = time.time()
     result = await technical.process(state)
-    print(f"  technical: {time.time() - start:.2f}s")
+    logger.debug("node_complete", node="technical", elapsed=round(time.time() - start, 3))
     return result
 
 
 async def account_node(state: GraphState) -> dict:
     start = time.time()
     result = await account.process(state)
-    print(f"  account: {time.time() - start:.2f}s")
+    logger.debug("node_complete", node="account", elapsed=round(time.time() - start, 3))
     return result
 
 
 async def general_node(state: GraphState) -> dict:
     start = time.time()
     result = await general.process(state)
-    print(f"  general: {time.time() - start:.2f}s")
+    logger.debug("node_complete", node="general", elapsed=round(time.time() - start, 3))
     return result
 
 
