@@ -40,9 +40,10 @@ app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 _settings = get_settings()
+_origins = [o.strip() for o in _settings.allowed_origins.split(",") if o.strip()]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=_settings.allowed_origins,
+    allow_origins=_origins,
     allow_methods=["*"],
     allow_headers=["*"],
 )
